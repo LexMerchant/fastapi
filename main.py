@@ -14,26 +14,23 @@ logging.basicConfig(
     format="%(asctime)s - %(message)s"
 )
 
-# Разрешаем CORS (временно "*", потом подставишь свой getcourse-домен)
+# Разрешаем CORS только с твоего сайта (обязательно без / в конце!)
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=["https://dentera.info"],
+    allow_origins=["https://dentera.info"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Модель трека
+# Модель данных
 class TrackData(BaseModel):
     page: str
     source: Optional[str] = None
     timestamp: Optional[str] = None
     user_agent: Optional[str] = None
 
-@app.get("/")
-async def root():
-    return {"message": "Service is working"}
-
+# Обработчик трека
 @app.post("/track")
 async def track(data: TrackData, request: Request):
     ip = request.client.host
@@ -47,3 +44,8 @@ async def track(data: TrackData, request: Request):
     }
     logging.info(str(log_entry))
     return {"status": "ok"}
+
+# Тестовая ручка
+@app.get("/")
+def read_root():
+    return {"message": "Service is working"}
