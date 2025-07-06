@@ -7,28 +7,32 @@ import logging
 
 app = FastAPI()
 
-# Логгирование
+# Настройка логгирования
 logging.basicConfig(
     filename="track.log",
     level=logging.INFO,
     format="%(asctime)s - %(message)s"
 )
 
-# CORS (допусти GetCourse или любые источники)
+# Разрешаем CORS (временно "*", потом подставишь свой getcourse-домен)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # или укажи точно: ["https://твоя.getcourse.link"]
+   allow_origins=["https://dentera.info"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Модель данных
+# Модель трека
 class TrackData(BaseModel):
     page: str
     source: Optional[str] = None
     timestamp: Optional[str] = None
     user_agent: Optional[str] = None
+
+@app.get("/")
+async def root():
+    return {"message": "Service is working"}
 
 @app.post("/track")
 async def track(data: TrackData, request: Request):
