@@ -7,22 +7,26 @@ import logging
 
 app = FastAPI()
 
-# Настройка логгирования
+# Логгирование в файл
 logging.basicConfig(
     filename="track.log",
     level=logging.INFO,
     format="%(asctime)s - %(message)s"
 )
 
-# Разрешаем CORS только с твоего сайта (обязательно без / в конце!)
+# Разрешаем CORS только для твоего домена
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://dentera.info",
-                   "https://dentera.info/melnichenko/web/verticalgingivalaugmentation"],
+    allow_origins=["https://dentera.info/melnichenko/web/verticalgingivalaugmentation"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Проверка работоспособности
+@app.get("/")
+async def root():
+    return {"message": "Service is working"}
 
 # Модель данных
 class TrackData(BaseModel):
@@ -31,7 +35,7 @@ class TrackData(BaseModel):
     timestamp: Optional[str] = None
     user_agent: Optional[str] = None
 
-# Обработчик трека
+# Основной маршрут
 @app.post("/track")
 async def track(data: TrackData, request: Request):
     ip = request.client.host
@@ -46,7 +50,7 @@ async def track(data: TrackData, request: Request):
     logging.info(str(log_entry))
     return {"status": "ok"}
 
-# Тестовая ручка
-@app.get("/")
-def read_root():
-    return {"message": "Service is working"}
+# Временный GET для ручной проверки
+@app.get("/track")
+async def test_track():
+    return {"message": "GET /track is alive"}
