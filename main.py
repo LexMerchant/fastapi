@@ -2,48 +2,61 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-from datetime import datetime
 import logging
-import json
+from datetime import datetime
 
+# Логирование в файл + консоль
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s",
+    handlers=[
+        logging.FileHandler("log.txt"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+# Инициализация FastAPI
 app = FastAPI()
 
-# Включаем CORS
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # поменяй на домен сайта при необходимости
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Настраиваем логирование
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("tracking.log"), logging.StreamHandler()]
-)
-
+# Модель данных
 class TrackData(BaseModel):
     source: Optional[str] = None
     timestamp: Optional[str] = None
-    page: str
+    page: Optional[str] = None
 
+# Проверка сервиса
 @app.get("/")
-def read_root():
+def root():
     return {"message": "Service is working"}
 
+# Обработка трекинга
 @app.post("/track")
-async def track(data: TrackData, request: Request):
-    log_entry = {
-        "ip": request.client.host,
-        "user_agent": request.headers.get("user-agent"),
-        "timestamp": data.timestamp or datetime.utcnow().isoformat(),
-        "source": data.source,
-        "page": data.page,
-        "method": request.method,
-        "path": request.url.path,
-        "referrer": request.headers.get("referer")
-    }
-    logging.info(json.dumps(log_entry, ensure_ascii=False))
-    return {"status": "ok"}
+async def track_endpoint(data: TrackData, request: Request):
+    ip = request.client.host
+    user_agent = request.headers.get("user-agent", "unknown")
+    timestamp = data.timestamp or datetime.now().isoformat()
+
+    log_entry = (
+        f"🔹 Tracking Event:\n"
+        f"Page: {data.page}\n"
+        f"Source: {data.source}\n"
+        f"Timestamp: {timestamp}\n"
+        f"IP: {ip}\n"
+        f"User-Agent: {user_agent}\n"
+        "--------------------------------------"
+    )
+
+    logger.info(log_entry)
+
+    return {"status": "success", "logged": True}
