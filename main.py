@@ -17,7 +17,8 @@ logging.basicConfig(
 # Разрешаем CORS только с твоего сайта (обязательно без / в конце!)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://dentera.info"],
+    allow_origins=["https://dentera.info",
+                   "https://dentera.info/melnichenko/web/verticalgingivalaugmentation"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
