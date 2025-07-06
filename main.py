@@ -2,28 +2,22 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
-import logging
 from datetime import datetime
+import logging
 
-# Логирование в файл + консоль
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(message)s",
-    handlers=[
-        logging.FileHandler("log.txt"),
-        logging.StreamHandler()
-    ]
-)
-
-logger = logging.getLogger(__name__)
-
-# Инициализация FastAPI
 app = FastAPI()
 
-# CORS
+# Логгирование
+logging.basicConfig(
+    filename="track.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(message)s"
+)
+
+# CORS (допусти GetCourse или любые источники)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # поменяй на домен сайта при необходимости
+    allow_origins=["*"],  # или укажи точно: ["https://твоя.getcourse.link"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,32 +25,21 @@ app.add_middleware(
 
 # Модель данных
 class TrackData(BaseModel):
+    page: str
     source: Optional[str] = None
     timestamp: Optional[str] = None
-    page: Optional[str] = None
+    user_agent: Optional[str] = None
 
-# Проверка сервиса
-@app.get("/")
-def root():
-    return {"message": "Service is working"}
-
-# Обработка трекинга
 @app.post("/track")
-async def track_endpoint(data: TrackData, request: Request):
+async def track(data: TrackData, request: Request):
     ip = request.client.host
-    user_agent = request.headers.get("user-agent", "unknown")
-    timestamp = data.timestamp or datetime.now().isoformat()
-
-    log_entry = (
-        f"🔹 Tracking Event:\n"
-        f"Page: {data.page}\n"
-        f"Source: {data.source}\n"
-        f"Timestamp: {timestamp}\n"
-        f"IP: {ip}\n"
-        f"User-Agent: {user_agent}\n"
-        "--------------------------------------"
-    )
-
-    logger.info(log_entry)
-
-    return {"status": "success", "logged": True}
+    user_agent = request.headers.get("user-agent")
+    log_entry = {
+        "ip": ip,
+        "user_agent": user_agent,
+        "page": data.page,
+        "source": data.source,
+        "timestamp": data.timestamp or datetime.now().isoformat()
+    }
+    logging.info(str(log_entry))
+    return {"status": "ok"}
